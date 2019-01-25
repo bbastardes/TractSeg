@@ -98,6 +98,43 @@ class BaseModel:
             self.net.conv_5 = nn.Conv2d(self.Config.UNET_NR_FILT, self.Config.NR_OF_CLASSES, kernel_size=1,
                                         stride=1, padding=0, bias=True).to(self.device)
 
+        self.random_vec = None
+        self.init_random_direction(self.net) #initialize
+
+        #todo important: change
+        print("Changing")
+
+        print(self.net.state_dict()["contr_1_1.0.weight"][0,0,0])
+
+        print("rand vec")
+        print(self.random_vec["contr_1_1.0.weight"][0, 0, 0])
+
+        self.add_random_direction(3.)
+
+        print("AFTER")
+        print(self.net.state_dict()["contr_1_1.0.weight"][0,0,0])
+
+        import IPython
+        IPython.embed()
+
+
+    def init_random_direction(self, net):
+        if self.random_vec is None:
+            self.random_vec = {}
+            for key, value in net.state_dict().items():
+                #todo important: change
+                self.random_vec[key] = torch.rand_like(value)
+
+
+    def add_random_direction(self, alpha):
+        for key, value in self.random_vec.items():
+            #todo important: change
+            # self.net.state_dict()[key] += (alpha * self.random_vec[key])
+            # self.net.state_dict()[key] += self.random_vec[key]
+            #todo important: change
+            # todo: how to copy values?? If not using [0] nothing will be copied. But we want all, not only [0]
+            self.net.state_dict()[key][0] = self.random_vec[key][0]
+
 
     def train(self, X, y, weight_factor=10):
         X = torch.tensor(X, dtype=torch.float32).to(self.device)  # (bs, features, x, y)
