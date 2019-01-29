@@ -90,9 +90,8 @@ class BaseModel:
             # self.scheduler = lr_scheduler.ReduceLROnPlateau(self.optimizer, mode="max")
 
         if self.Config.LOAD_WEIGHTS:
-            exp_utils.print_verbose(self.Config, "Loading weights ... ({})".format(join(self.Config.EXP_PATH,
-                                                                                        self.Config.WEIGHTS_PATH)))
-            self.load_model(join(self.Config.EXP_PATH, self.Config.WEIGHTS_PATH))
+            exp_utils.print_verbose(self.Config, "Loading weights ... ({})".format(join(self.Config.WEIGHTS_PATH)))
+            self.load_model(join(self.Config.WEIGHTS_PATH))
 
         if self.Config.RESET_LAST_LAYER:
             self.net.conv_5 = nn.Conv2d(self.Config.UNET_NR_FILT, self.Config.NR_OF_CLASSES, kernel_size=1,
@@ -101,39 +100,30 @@ class BaseModel:
         self.random_vec = None
         self.init_random_direction(self.net) #initialize
 
-        #todo important: change
-        print("Changing")
+        # print("Changing")
+        # print(self.net.state_dict()["contr_1_1.0.weight"][0,0,0])
 
-        print(self.net.state_dict()["contr_1_1.0.weight"][0,0,0])
+        # print("rand vec")
+        # print(self.random_vec["contr_1_1.0.weight"][0, 0, 0])
 
-        print("rand vec")
-        print(self.random_vec["contr_1_1.0.weight"][0, 0, 0])
+        # self.add_random_direction(0.005)
 
-        self.add_random_direction(3.)
+        # print("AFTER")
+        # print(self.net.state_dict()["contr_1_1.0.weight"][0,0,0])
 
-        print("AFTER")
-        print(self.net.state_dict()["contr_1_1.0.weight"][0,0,0])
-
-        import IPython
-        IPython.embed()
+        # import IPython
+        # IPython.embed()
 
 
     def init_random_direction(self, net):
         if self.random_vec is None:
             self.random_vec = {}
             for key, value in net.state_dict().items():
-                #todo important: change
                 self.random_vec[key] = torch.rand_like(value)
-
 
     def add_random_direction(self, alpha):
         for key, value in self.random_vec.items():
-            #todo important: change
-            # self.net.state_dict()[key] += (alpha * self.random_vec[key])
-            # self.net.state_dict()[key] += self.random_vec[key]
-            #todo important: change
-            # todo: how to copy values?? If not using [0] nothing will be copied. But we want all, not only [0]
-            self.net.state_dict()[key][0] = self.random_vec[key][0]
+            self.net.state_dict()[key] += (alpha * self.random_vec[key])
 
 
     def train(self, X, y, weight_factor=10):
@@ -186,10 +176,13 @@ class BaseModel:
         return loss.item(), probs, f1
 
 
-    def test(self, X, y, weight_factor=10):
+    def test(self, X, y, weight_factor=10, alpha=0.005):
         with torch.no_grad():
             X = torch.tensor(X, dtype=torch.float32).to(self.device)
             y = torch.tensor(y, dtype=torch.float32).to(self.device)
+
+        #Add random direction
+        self.add_random_direction(alpha)
 
         if self.Config.DROPOUT_SAMPLING:
             self.net.train()

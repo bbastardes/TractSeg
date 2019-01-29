@@ -55,6 +55,8 @@ def train_model(Config, model, data_loader):
         }
         metrics = dict(list(metrics.items()) + list(metrics_new.items()))
 
+    loss_surface = []
+
     for epoch_nr in range(Config.NUM_EPOCHS):
         start_time = time.time()
         # current_lr = Config.LEARNING_RATE * (Config.LR_DECAY ** epoch_nr)
@@ -82,7 +84,9 @@ def train_model(Config, model, data_loader):
             else:
                 weight_factor = 1.
 
-        for type in ["train", "test", "validate"]:
+        #todo important: change
+        # for type in ["train", "test", "validate"]:
+        for type in ["validate"]:
             print_loss = []
             start_time_batch_gen = time.time()
 
@@ -97,7 +101,8 @@ def train_model(Config, model, data_loader):
                 nr_of_samples = len(getattr(Config, type.upper() + "_SUBJECTS"))
 
             # *Config.EPOCH_MULTIPLIER needed to have roughly same number of updates/batches as with 2D U-Net
-            nr_batches = int(nr_of_samples / Config.BATCH_SIZE) * Config.EPOCH_MULTIPLIER
+            # nr_batches = int(nr_of_samples / Config.BATCH_SIZE) * Config.EPOCH_MULTIPLIER
+            nr_batches = 5
 
             print("Start looping batches...")
             start_time_batch_part = time.time()
@@ -116,10 +121,26 @@ def train_model(Config, model, data_loader):
                     nr_of_updates += 1
                     loss, probs, f1 = model.train(x, y, weight_factor=weight_factor)
                     # loss, probs, f1, intermediate = model.train(x, y)
+                    print("TRAIN")
+
                 elif type == "validate":
-                    loss, probs, f1 = model.test(x, y, weight_factor=weight_factor)
+
+                    alpha = 0.001  # 0.005
+
+                    if epoch_nr == 0:
+                        loss, probs, f1 = model.test(x, y, weight_factor=weight_factor, alpha=alpha)
+                        print("tmp loss: {}".format(loss))
+                        loss_surface.append(loss)
+                    elif epoch_nr == 1:
+                        loss, probs, f1 = model.test(x, y, weight_factor=weight_factor, alpha=-alpha)
+                        print("tmp loss: {}".format(loss))
+                        loss_surface.insert(0, loss)   # append at beginning
+                    else:
+                        print("ERROR")
+
                 elif type == "test":
                     loss, probs, f1 = model.test(x, y, weight_factor=weight_factor)
+                    print("TEST")
                 network_time += time.time() - start_time_network
 
                 start_time_metrics = time.time()
@@ -199,38 +220,42 @@ def train_model(Config, model, data_loader):
             model.print_current_lr()
 
         # Average loss per batch over entire epoch
-        metrics = metric_utils.normalize_last_element(metrics, batch_nr["train"], type="train")
-        metrics = metric_utils.normalize_last_element(metrics, batch_nr["validate"], type="validate")
-        metrics = metric_utils.normalize_last_element(metrics, batch_nr["test"], type="test")
+        # metrics = metric_utils.normalize_last_element(metrics, batch_nr["train"], type="train")
+        # metrics = metric_utils.normalize_last_element(metrics, batch_nr["validate"], type="validate")
+        # metrics = metric_utils.normalize_last_element(metrics, batch_nr["test"], type="test")
+        #
+        # print("  Epoch {}, Average Epoch loss = {}".format(epoch_nr, metrics["loss_train"][-1]))
+        # print("  Epoch {}, nr_of_updates {}".format(epoch_nr, nr_of_updates))
+        #
+        # # Save Weights
+        # start_time_saving = time.time()
+        # if Config.SAVE_WEIGHTS:
+        #     model.save_model(metrics, epoch_nr)
+        # saving_time += time.time() - start_time_saving
+        #
+        # # Create Plots
+        # start_time_plotting = time.time()
+        # pickle.dump(metrics, open(join(Config.EXP_PATH, "metrics.pkl"), "wb"))
+        # plot_utils.create_exp_plot(metrics, Config.EXP_PATH, Config.EXP_NAME)
+        # plot_utils.create_exp_plot(metrics, Config.EXP_PATH, Config.EXP_NAME, without_first_epochs=True)
+        # plotting_time += time.time() - start_time_plotting
+        #
+        # epoch_time = time.time() - start_time
+        # epoch_times.append(epoch_time)
+        #
+        # exp_utils.print_and_save(Config, "  Epoch {}, time total {}s".format(epoch_nr, epoch_time))
+        # exp_utils.print_and_save(Config, "  Epoch {}, time UNet: {}s".format(epoch_nr, network_time))
+        # exp_utils.print_and_save(Config, "  Epoch {}, time metrics: {}s".format(epoch_nr, metrics_time))
+        # exp_utils.print_and_save(Config, "  Epoch {}, time saving files: {}s".format(epoch_nr, saving_time))
+        # exp_utils.print_and_save(Config, str(datetime.datetime.now()))
+        #
+        # # Adding next Epoch
+        # if epoch_nr < Config.NUM_EPOCHS-1:
+        #     metrics = metric_utils.add_empty_element(metrics)
 
-        print("  Epoch {}, Average Epoch loss = {}".format(epoch_nr, metrics["loss_train"][-1]))
-        print("  Epoch {}, nr_of_updates {}".format(epoch_nr, nr_of_updates))
 
-        # Save Weights
-        start_time_saving = time.time()
-        if Config.SAVE_WEIGHTS:
-            model.save_model(metrics, epoch_nr)
-        saving_time += time.time() - start_time_saving
-
-        # Create Plots
-        start_time_plotting = time.time()
-        pickle.dump(metrics, open(join(Config.EXP_PATH, "metrics.pkl"), "wb"))
-        plot_utils.create_exp_plot(metrics, Config.EXP_PATH, Config.EXP_NAME)
-        plot_utils.create_exp_plot(metrics, Config.EXP_PATH, Config.EXP_NAME, without_first_epochs=True)
-        plotting_time += time.time() - start_time_plotting
-
-        epoch_time = time.time() - start_time
-        epoch_times.append(epoch_time)
-
-        exp_utils.print_and_save(Config, "  Epoch {}, time total {}s".format(epoch_nr, epoch_time))
-        exp_utils.print_and_save(Config, "  Epoch {}, time UNet: {}s".format(epoch_nr, network_time))
-        exp_utils.print_and_save(Config, "  Epoch {}, time metrics: {}s".format(epoch_nr, metrics_time))
-        exp_utils.print_and_save(Config, "  Epoch {}, time saving files: {}s".format(epoch_nr, saving_time))
-        exp_utils.print_and_save(Config, str(datetime.datetime.now()))
-
-        # Adding next Epoch
-        if epoch_nr < Config.NUM_EPOCHS-1:
-            metrics = metric_utils.add_empty_element(metrics)
+    print("final loss surface:")
+    print(loss_surface)
 
 
     ####################################

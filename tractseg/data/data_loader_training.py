@@ -38,7 +38,7 @@ from batchgenerators.transforms.resample_transforms import ResampleTransform
 from batchgenerators.transforms.noise_transforms import GaussianNoiseTransform
 from batchgenerators.transforms.spatial_transforms import SpatialTransform, FlipVectorAxisTransform
 from batchgenerators.transforms.spatial_transforms import MirrorTransform
-from batchgenerators.transforms.crop_and_pad_transforms import PadToMultipleTransform
+# from batchgenerators.transforms.crop_and_pad_transforms import PadToMultipleTransform
 from batchgenerators.transforms.sample_normalization_transforms import ZeroMeanUnitVarianceTransform
 from batchgenerators.transforms.abstract_transforms import Compose
 from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
@@ -129,12 +129,18 @@ class BatchGenerator2D_Nifti_random(SlimDataLoaderBase):
         self.Config = None
 
     def generate_train_batch(self):
+        #todo important: change
         subjects = self._data[0]
+        subjects = ["992774"]
         subject_idx = int(random.uniform(0, len(subjects)))     # len(subjects)-1 not needed because int always rounds to floor
 
         data, seg = load_training_data(self.Config, subjects[subject_idx])
 
-        slice_idxs = np.random.choice(data.shape[0], self.batch_size, False, None)
+        #todo important: change
+        # slice_idxs = np.random.choice(data.shape[0], self.batch_size, False, None)
+        slice_idxs = [41, 105, 129, 5, 24, 136, 35, 99, 91, 86, 121, 89, 97, 125, 3, 10, 9,  74, 2,
+                      23, 132, 110, 45, 25, 123, 64, 111, 12, 84, 54, 101, 127, 14, 48, 53, 92, 118,
+                      138, 78, 11, 44, 28, 120, 0, 27, 36, 143, 20]
         x, y = dataset_utils.sample_slices(data, seg, slice_idxs,
                               training_slice_direction=self.Config.TRAINING_SLICE_DIRECTION,
                               labels_type=self.Config.LABELS_TYPE)
@@ -195,17 +201,17 @@ class DataLoaderTraining:
     def _augment_data(self, batch_generator, type=None):
 
         if self.Config.DATA_AUGMENTATION:
-            num_processes = 8  # 6 is a bit faster than 16
+            num_processes = 1  # 6 is a bit faster than 16
         else:
-            num_processes = 6
+            num_processes = 1
 
         tfs = []  #transforms
 
         if self.Config.NORMALIZE_DATA:
             tfs.append(ZeroMeanUnitVarianceTransform(per_channel=self.Config.NORMALIZE_PER_CHANNEL))
 
-        if self.Config.DATASET == "Schizo" and self.Config.RESOLUTION == "2mm":
-            tfs.append(PadToMultipleTransform(16))
+        # if self.Config.DATASET == "Schizo" and self.Config.RESOLUTION == "2mm":
+        #     tfs.append(PadToMultipleTransform(16))
 
         if self.Config.DATA_AUGMENTATION:
             if type == "train":

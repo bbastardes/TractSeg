@@ -38,7 +38,7 @@ from batchgenerators.transforms.resample_transforms import ResampleTransform
 from batchgenerators.transforms.noise_transforms import GaussianNoiseTransform
 from batchgenerators.transforms.spatial_transforms import SpatialTransform, FlipVectorAxisTransform
 from batchgenerators.transforms.spatial_transforms import MirrorTransform
-from batchgenerators.transforms.crop_and_pad_transforms import PadToMultipleTransform
+# from batchgenerators.transforms.crop_and_pad_transforms import PadToMultipleTransform
 from batchgenerators.transforms.sample_normalization_transforms import ZeroMeanUnitVarianceTransform
 from batchgenerators.transforms.abstract_transforms import Compose
 from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
@@ -101,9 +101,6 @@ class DataLoaderTraining:
 
         if self.Config.NORMALIZE_DATA:
             tfs.append(ZeroMeanUnitVarianceTransform(per_channel=self.Config.NORMALIZE_PER_CHANNEL))
-
-        if self.Config.DATASET == "Schizo" and self.Config.RESOLUTION == "2mm":
-            tfs.append(PadToMultipleTransform(16))
 
         if self.Config.DATA_AUGMENTATION:
             if type == "train":
