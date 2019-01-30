@@ -97,13 +97,12 @@ class BaseModel:
             self.net.conv_5 = nn.Conv2d(self.Config.UNET_NR_FILT, self.Config.NR_OF_CLASSES, kernel_size=1,
                                         stride=1, padding=0, bias=True).to(self.device)
 
-        self.random_vec = None
+        self.orig_weights = {}
+        self.store_orig_weights(self.net)
+        self.random_vec_1 = {}
+        self.random_vec_2 = {}
         self.init_random_direction(self.net) #initialize
 
-        nr_steps = 60
-        alpha = 0.0005
-        # move to make in negative direction, otherwise we have to run in 2 directions: first postive then negative
-        self.add_random_direction(-(nr_steps / 2.) * alpha)
 
         # print("Changing")
         # print(self.net.state_dict()["contr_1_1.0.weight"][0,0,0])
@@ -119,16 +118,42 @@ class BaseModel:
         # import IPython
         # IPython.embed()
 
+    def store_orig_weights(self, net):
+        self.orig_weights = {}
+        for key, value in net.state_dict().items():
+            self.orig_weights[key] = value.clone()
 
     def init_random_direction(self, net):
-        # if self.random_vec is None:
-        self.random_vec = {}
+        self.random_vec_1 = {}
+        self.random_vec_2 = {}
         for key, value in net.state_dict().items():
-            self.random_vec[key] = torch.rand_like(value)
+            self.random_vec_1[key] = torch.rand_like(value)
+            self.random_vec_2[key] = torch.rand_like(value)
 
-    def add_random_direction(self, alpha):
-        for key, value in self.random_vec.items():
-            self.net.state_dict()[key] += (alpha * self.random_vec[key])
+    def set_position(self, alpha1, alpha2):
+        for key, value in self.random_vec_1.items():
+            # if key == "contr_1_1.0.weight":
+                # print("##1: {}".format(self.net.state_dict()["contr_1_1.0.weight"][0, 0, 0]))
+                # print("##2: {}".format(self.orig_weights["contr_1_1.0.weight"][0, 0, 0]))
+
+            # self.net.state_dict()[key] = self.orig_weights[key].clone()   # NOT WORKING! DOES NOT UPDATE!!
+            self.net.state_dict()[key].copy_(self.orig_weights[key])
+
+            # if key == "contr_1_1.0.weight":
+            #     print("##3: {}".format(self.net.state_dict()["contr_1_1.0.weight"][0, 0, 0]))
+            self.net.state_dict()[key] += (alpha1 * self.random_vec_1[key])
+            # self.net.state_dict()[key] += 10
+            self.net.state_dict()[key] += (alpha2 * self.random_vec_2[key])
+
+
+    def add_random_direction(self, alpha1, alpha2):
+        if alpha1 is not None:
+            for key, value in self.random_vec_1.items():
+                self.net.state_dict()[key] += (alpha1 * self.random_vec_1[key])
+
+        if alpha2 is not None:
+            for key, value in self.random_vec_2.items():
+                self.net.state_dict()[key] += (alpha2 * self.random_vec_2[key])
 
 
     def train(self, X, y, weight_factor=10):
@@ -181,13 +206,13 @@ class BaseModel:
         return loss.item(), probs, f1
 
 
-    def test(self, X, y, weight_factor=10, alpha=0.005):
+    def test(self, X, y, weight_factor=10, alpha1=0.005, alpha2=0.005):
         with torch.no_grad():
             X = torch.tensor(X, dtype=torch.float32).to(self.device)
             y = torch.tensor(y, dtype=torch.float32).to(self.device)
 
         #Add random direction
-        self.add_random_direction(alpha)
+        self.add_random_direction(alpha1, alpha2)
 
         if self.Config.DROPOUT_SAMPLING:
             self.net.train()

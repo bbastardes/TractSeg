@@ -58,10 +58,40 @@ def train_model(Config, model, data_loader):
 
     loss_surface = []
 
-    for epoch_nr in range(Config.NUM_EPOCHS):
+    # nr_steps = 60
+    # alpha = 0.0005
+    nr_steps = 30
+    alpha = 0.001
+
+    #todo important: change
+    for epoch_nr in range(nr_steps):
+    # for epoch_nr in range(1):
         start_time = time.time()
         # current_lr = Config.LEARNING_RATE * (Config.LR_DECAY ** epoch_nr)
         # current_lr = Config.LEARNING_RATE
+
+        loss_surface.append([])
+
+        # move to make in negative direction, otherwise we have to run in 2 directions: first postive then negative
+        #todo important: change
+        model.set_position(-(nr_steps / 2.) * alpha, -((nr_steps / 2.) - epoch_nr) * alpha)
+        # model.set_position(-(nr_steps / 2.) * alpha, 0)
+
+        # print("orig 1: {}".format(model.orig_weights["contr_1_1.0.weight"][0, 0, 0]))
+        # print("orig 1xx: {}".format(model.net.state_dict()["contr_1_1.0.weight"][0, 0, 0]))
+        # print("orig 1.: {}".format(model.random_vec_1["contr_1_1.0.weight"][0, 0, 0]))
+        # print("----------")
+        # model.set_position(-(nr_steps / 2.) * alpha, 0)
+        # print("orig 2: {}".format(model.orig_weights["contr_1_1.0.weight"][0, 0, 0]))
+        # print("orig 2xx: {}".format(model.net.state_dict()["contr_1_1.0.weight"][0, 0, 0]))
+        # print("orig 2.: {}".format(model.random_vec_1["contr_1_1.0.weight"][0, 0, 0]))
+        # print("----------")
+        # model.set_position(-(nr_steps / 2.) * alpha, 0)
+        # print("orig 3: {}".format(model.orig_weights["contr_1_1.0.weight"][0, 0, 0]))
+        # print("orig 3xx: {}".format(model.net.state_dict()["contr_1_1.0.weight"][0, 0, 0]))
+        # print("orig 3.: {}".format(model.random_vec_1["contr_1_1.0.weight"][0, 0, 0]))
+
+
 
         batch_gen_time = 0
         data_preparation_time = 0
@@ -103,10 +133,7 @@ def train_model(Config, model, data_loader):
 
             # *Config.EPOCH_MULTIPLIER needed to have roughly same number of updates/batches as with 2D U-Net
             # nr_batches = int(nr_of_samples / Config.BATCH_SIZE) * Config.EPOCH_MULTIPLIER
-
-            # HPs
-            nr_batches = 60 # nr_steps
-            alpha = 0.0005  # 0.005
+            nr_batches = nr_steps
 
             print("Start looping batches...")
             start_time_batch_part = time.time()
@@ -129,16 +156,19 @@ def train_model(Config, model, data_loader):
 
                 elif type == "validate":
 
-                    if epoch_nr == 0:
-                        loss, probs, f1 = model.test(x, y, weight_factor=weight_factor, alpha=alpha)
-                        print("tmp loss: {}".format(loss))
-                        loss_surface.append(loss)
+                    # if epoch_nr == 0:
+                    loss, probs, f1 = model.test(x, y, weight_factor=weight_factor, alpha1=alpha, alpha2=None)
+                    print("tmp loss: {}".format(loss))
+                    # print("orig: {}".format(model.orig_weights["contr_1_1.0.weight"][0,0,0]))
+
+                    loss_surface[epoch_nr].append(loss)
+
                     # elif epoch_nr == 1:
                     #     loss, probs, f1 = model.test(x, y, weight_factor=weight_factor, alpha=-alpha)
                     #     print("tmp loss: {}".format(loss))
                     #     loss_surface.insert(0, loss)   # append at beginning
-                    else:
-                        print("ERROR")
+                    # else:
+                    #     print("ERROR")
 
                 elif type == "test":
                     loss, probs, f1 = model.test(x, y, weight_factor=weight_factor)
@@ -260,10 +290,35 @@ def train_model(Config, model, data_loader):
     print(loss_surface)
 
     #cut high values
-    loss_surface = [l if l < 20 else 20 for l in loss_surface]
+    # loss_surface = [l if l < 20 else 20 for l in loss_surface]
+    loss_surface = np.array(loss_surface)
+    # loss_surface[loss_surface > 20] = 20
 
-    plt.plot(loss_surface)
-    plt.savefig(join(Config.EXP_PATH, "loss_surface.png"))
+    loss_surface = (loss_surface - loss_surface.min()) / (loss_surface.max() - loss_surface.min())
+
+
+    print("-------")
+    print(loss_surface)
+
+
+    #2D
+    # plt.plot(loss_surface)
+    # plt.savefig(join(Config.EXP_PATH, "loss_surface.png"))
+
+    #3D
+    from mpl_toolkits.mplot3d import Axes3D
+    from matplotlib import cm
+
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    x = range(loss_surface.shape[0])
+    y = range(loss_surface.shape[0])
+    x, y = np.meshgrid(x, y)
+
+    surf = ax.plot_surface(x, y, loss_surface, cmap=cm.coolwarm, linewidth=0, antialiased=True)
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    plt.savefig(join(Config.EXP_PATH, "loss_surface_3D.png"))
+
 
     ####################################
     # After all epochs
@@ -271,6 +326,7 @@ def train_model(Config, model, data_loader):
     # with open(join(Config.EXP_PATH, "Hyperparameters.txt"), "a") as f:  # a for append
     #     f.write("\n\n")
     #     f.write("Average Epoch time: {}s".format(sum(epoch_times) / float(len(epoch_times))))
+
 
     return model
 
