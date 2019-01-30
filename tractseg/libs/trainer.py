@@ -32,6 +32,7 @@ from tractseg.libs import metric_utils
 from tractseg.libs import dataset_utils
 from tractseg.libs import plot_utils
 
+import matplotlib.pyplot as plt
 
 def train_model(Config, model, data_loader):
 
@@ -102,7 +103,10 @@ def train_model(Config, model, data_loader):
 
             # *Config.EPOCH_MULTIPLIER needed to have roughly same number of updates/batches as with 2D U-Net
             # nr_batches = int(nr_of_samples / Config.BATCH_SIZE) * Config.EPOCH_MULTIPLIER
-            nr_batches = 5
+
+            # HPs
+            nr_batches = 60 # nr_steps
+            alpha = 0.0005  # 0.005
 
             print("Start looping batches...")
             start_time_batch_part = time.time()
@@ -125,16 +129,14 @@ def train_model(Config, model, data_loader):
 
                 elif type == "validate":
 
-                    alpha = 0.001  # 0.005
-
                     if epoch_nr == 0:
                         loss, probs, f1 = model.test(x, y, weight_factor=weight_factor, alpha=alpha)
                         print("tmp loss: {}".format(loss))
                         loss_surface.append(loss)
-                    elif epoch_nr == 1:
-                        loss, probs, f1 = model.test(x, y, weight_factor=weight_factor, alpha=-alpha)
-                        print("tmp loss: {}".format(loss))
-                        loss_surface.insert(0, loss)   # append at beginning
+                    # elif epoch_nr == 1:
+                    #     loss, probs, f1 = model.test(x, y, weight_factor=weight_factor, alpha=-alpha)
+                    #     print("tmp loss: {}".format(loss))
+                    #     loss_surface.insert(0, loss)   # append at beginning
                     else:
                         print("ERROR")
 
@@ -257,13 +259,18 @@ def train_model(Config, model, data_loader):
     print("final loss surface:")
     print(loss_surface)
 
+    #cut high values
+    loss_surface = [l if l < 20 else 20 for l in loss_surface]
+
+    plt.plot(loss_surface)
+    plt.savefig(join(Config.EXP_PATH, "loss_surface.png"))
 
     ####################################
     # After all epochs
     ###################################
-    with open(join(Config.EXP_PATH, "Hyperparameters.txt"), "a") as f:  # a for append
-        f.write("\n\n")
-        f.write("Average Epoch time: {}s".format(sum(epoch_times) / float(len(epoch_times))))
+    # with open(join(Config.EXP_PATH, "Hyperparameters.txt"), "a") as f:  # a for append
+    #     f.write("\n\n")
+    #     f.write("Average Epoch time: {}s".format(sum(epoch_times) / float(len(epoch_times))))
 
     return model
 

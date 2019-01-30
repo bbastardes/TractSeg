@@ -100,6 +100,11 @@ class BaseModel:
         self.random_vec = None
         self.init_random_direction(self.net) #initialize
 
+        nr_steps = 60
+        alpha = 0.0005
+        # move to make in negative direction, otherwise we have to run in 2 directions: first postive then negative
+        self.add_random_direction(-(nr_steps / 2.) * alpha)
+
         # print("Changing")
         # print(self.net.state_dict()["contr_1_1.0.weight"][0,0,0])
 
@@ -116,10 +121,10 @@ class BaseModel:
 
 
     def init_random_direction(self, net):
-        if self.random_vec is None:
-            self.random_vec = {}
-            for key, value in net.state_dict().items():
-                self.random_vec[key] = torch.rand_like(value)
+        # if self.random_vec is None:
+        self.random_vec = {}
+        for key, value in net.state_dict().items():
+            self.random_vec[key] = torch.rand_like(value)
 
     def add_random_direction(self, alpha):
         for key, value in self.random_vec.items():
