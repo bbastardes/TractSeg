@@ -392,9 +392,9 @@ def get_labels_filename(Config):
         else:
             Config.LABELS_FILENAME = "NOT_AVAILABLE"
 
-    elif Config.CLASSES == "AR" and Config.EXPERIMENT_TYPE == "peak_regression":
+    elif Config.CLASSES == "AR" and Config.EXPERIMENT_TYPE == "tract_segmentation":
         if Config.RESOLUTION == "1.25mm":
-            Config.LABELS_FILENAME = "bundle_peaks_AR"
+            Config.LABELS_FILENAME = "bundle_masks_AR"
         else:
             Config.LABELS_FILENAME = "NOT_AVAILABLE"
 
