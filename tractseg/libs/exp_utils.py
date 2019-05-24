@@ -452,7 +452,9 @@ def get_cv_fold(fold, dataset="HCP"):
 
         subjects = get_all_subjects(dataset)
 
-        if dataset.startswith("HCP"):
+        if dataset == "HCP_BLANCA":
+            pass
+        elif dataset.startswith("HCP"):
             # subjects = list(Utils.chunks(subjects[:100], 10))   #10 folds
             subjects = list(utils.chunks(subjects, 21))   #5 folds a 21 subjects
             # => 5 fold CV ok (score only 1%-point worse than 10 folds (80 vs 60 train subjects) (10 Fold CV impractical!)
