@@ -9,5 +9,5 @@ class Config(TractSegConfig):
     EXP_NAME = os.path.basename(__file__).split(".")[0]
 
     DATASET = "HCP_BLANCA"
-    DATASET_FOLDER = "data_preproc"      # name of folder that contains all the preprocessed subjects (each subject has its own folder with the name of the subjectID)
+    DATASET_FOLDER = "data_training"      # name of folder that contains all the preprocessed subjects (each subject has its own folder with the name of the subjectID)
     FEATURES_FILENAME = "peaks"  # filename of nifti file (*.nii.gz) without file ending; mrtrix CSD peaks; shape: [x,y,z,9]; one file for each subject
