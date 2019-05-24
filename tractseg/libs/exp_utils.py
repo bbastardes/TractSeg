@@ -250,6 +250,9 @@ def get_bundle_names(CLASSES):
         # Only use subset of classes for unit testing because of runtime
         bundles = ["CST_right", "CA", "UF_left"]
 
+    elif CLASSES == "AR":
+        bundles = ["AR_left", "AR_right"]
+
     else:
         #1 tract
         # bundles = ["CST_right"]
@@ -386,6 +389,12 @@ def get_labels_filename(Config):
             Config.EXPERIMENT_TYPE == "dm_regression":
         if Config.RESOLUTION == "1.25mm":
             Config.LABELS_FILENAME = "bundle_masks_autoPTX_dm"
+        else:
+            Config.LABELS_FILENAME = "NOT_AVAILABLE"
+
+    elif Config.CLASSES == "AR" and Config.EXPERIMENT_TYPE == "peak_regression":
+        if Config.RESOLUTION == "1.25mm":
+            Config.LABELS_FILENAME = "bundle_peaks_AR"
         else:
             Config.LABELS_FILENAME = "NOT_AVAILABLE"
 

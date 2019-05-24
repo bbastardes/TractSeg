@@ -32,8 +32,8 @@ from tractseg.libs.subjects import get_all_subjects
 from tractseg.libs import img_utils
 
 
-dataset = "HCP_all"
-DATASET_FOLDER_PREPROC = "HCP_preproc_all"  # target folder
+dataset = "HCP_BLANCA"
+DATASET_FOLDER_PREPROC = "data_preproc"  # target folder
 
 def create_preprocessed_files(subject):
 

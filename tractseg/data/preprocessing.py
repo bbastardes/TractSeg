@@ -33,9 +33,9 @@ from tractseg.libs.subjects import get_all_subjects
 from tractseg.libs import exp_utils
 
 #todo: adapt
-dataset = "HCP_final"
-DATASET_FOLDER = "HCP_for_training_COPY"  # source folder
-DATASET_FOLDER_PREPROC = "HCP_preproc"  # target folder
+dataset = "HCP_BLANCA"
+DATASET_FOLDER = "data_training"  # source folder
+DATASET_FOLDER_PREPROC = "data_preproc"  # target folder
 
 # dataset = "HCP_all"
 # DATASET_FOLDER = "HCP_for_training_COPY_all"  # source folder
@@ -55,8 +55,8 @@ def create_preprocessed_files(subject):
 
     # filenames_data = ["270g_125mm_bedpostx_peaks_scaled", "32g_125mm_bedpostx_peaks_scaled"]
     # filenames_seg = ["bundle_masks_autoPTX_dm", "bundle_masks_autoPTX_thr001"]
-    filenames_data = ["270g_125mm_bedpostx_peaks_scaled", "32g_125mm_bedpostx_peaks_scaled"]
-    filenames_seg = []
+    filenames_data = ["peaks", "nodif_brain_mask"]
+    filenames_seg = ["bundle_masks_AR"]
 
 
     print("idx: {}".format(subjects.index(subject)))

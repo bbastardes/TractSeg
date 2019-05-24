@@ -106,12 +106,18 @@ all_subjects_Schizo = ['CH7912a', 'A00014804', 'A00020805', 'A00010684', 'CH8301
                        'A00028885', 'CH7957', 'A00018403', 'CH7944a', 'A00036455', 'A00031249', 'A00000159', 'CH7692a',
                        'A00000300', 'A00000456', 'A00014830', 'A00012767', 'A00014607']
 
+# subjects BLANCA
+subjects_BLANCA = ["704238", "705341", "709551", "715041", "715647"]
+
 def get_all_subjects(dataset="HCP"):
+
     if dataset == "HCP" or dataset == "HCP_final" or dataset == "HCP_32g":
         return all_subjects_FINAL
     elif dataset == "HCP_all":
         return all_subjects_HCP_all
     elif dataset.startswith("Schizo"):
         return all_subjects_Schizo
+    elif dataset == "HCP_BLANCA":
+        return subjects_BLANCA
     else:
         raise ValueError("Invalid dataset name")
